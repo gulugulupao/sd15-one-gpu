@@ -1,0 +1,75 @@
+# =====================================================================
+#  SD15 文生图 · 纯 GPU 分发版 — LICENSE（开源授权）
+#  MIT License + 附加保护条款 + 支持范围与免责声明
+# =====================================================================
+
+MIT License
+
+Copyright (c) 2026 很多问题的小明同学（GitHub @gulugulupao）
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----------------------------------------------------------------------
+授权范围说明（Scope of this License）
+----------------------------------------------------------------------
+本 MIT 授权仅覆盖本项目中由作者自行编写的「部署整合代码」
+（entrypoint.py / compose 配置 / 部署与守护脚本等），不覆盖下列第三方资产：
+
+· 模型权重：OpenVINO/stable-diffusion-v1-5-int8-ov，原始权重来自
+  RunwayML / CompVis，按 creativeml-openrail-m 授权；再分发须遵守
+  该许可证的使用限制并附带其副本。
+· 运行时与框架：OpenVINO Model Server、OpenVINO、Gradio
+  （Apache-2.0 及其各自上游许可证）。
+· 镜像内其余系统组件，均按各自上游许可证执行。
+
+----------------------------------------------------------------------
+附加保护条款（Additional Protection Terms）
+----------------------------------------------------------------------
+在 MIT License 授权之上，作者进一步声明如下限制；与 MIT License
+存在冲突时，以本节为准：
+
+1. 署名保留：复制、修改或再分发本项目（含网页界面、镜像打包产物、
+   文档）时，必须保留本版权声明与作者署名
+   （很多问题的小明同学 / GitHub: gulugulupao），不得删除或更改。
+
+2. 禁止商用：未经作者书面许可，不得将本项目或其修改版本用于
+   商业销售、SaaS 服务、捆绑收费等直接或间接营利性用途。
+
+3. 修改后分发约束：允许以学习交流为目的发布修改版，但不得使用
+   原项目名称（sd15-one-gpu）、原署名标识及相关素材，以免与
+   原始项目造成混淆。
+
+4. 官方渠道声明：本镜像仅在作者官方渠道发布——GitHub
+   （gulugulupao/sd15-one-gpu）与微信公众号「很多问题的小明同学」。
+   作者不对第三方转载、重新打包或修改版本提供任何支持。
+
+----------------------------------------------------------------------
+支持范围与免责声明（Support Scope & Disclaimer）
+----------------------------------------------------------------------
+本项目为社区自制工具，与绿联（UGREEN）、Intel、OpenVINO、Gradio
+等官方无关，不属于任何厂商的官方产品或功能。
+
+· 模型与生成内容：使用者须自行遵守 creativeml-openrail-m 的使用限制；
+  作者对模型输出内容及其使用后果不承担责任。
+· 硬件与内存：SD1.5 GPU 稳定出图需 ≥16GB 内存；8GB 机型可能无法完成
+  出图，低内存下加载可能失败，请按实际环境评估。
+· 作者仅对本仓库官方发布的最新版本提供社区级支持（GitHub Issues），
+  不承诺与任何特定系统版本、硬件或固件 100% 兼容。
+· 软件按「现状」提供，不含任何明示或默示担保；因安装、配置、使用
+  本项目产生的性能、稳定性、兼容性问题及数据风险，由使用者自行承担。
