@@ -1,0 +1,45 @@
+# SD15 文生图 · 纯 GPU 版 · 在线拉取版 compose（只暴露 7860 网页口）
+# 2026-11-08：镜像从 Docker Hub 直接拉取，无需先导入 tar。
+# 本 tag 为修复版：纯 GPU 版界面不再出现 NPU 选项，镜像只声明 7860 端口。
+# 若你用的是 GitHub Release 的离线 tar（镜像 tag 为 sd15-one-gpu:local），
+# 请改用 compose.dist.gpu.yaml，两者不要混用。
+#
+# 适用：只有 Intel 核显、没有 NPU 的机器（N100 / 8505 / 1215U / 1235U /
+#       1315U / Core Ultra 5 120U / 150U / 酷睿 3 304 等，Gen12.2~Xe3 通吃）。
+#
+# ⚠️ 内存门槛（实测）：
+#   - 16GB 机型：直接可用，模型加载后仍有 ~4GB 余量，可正常出图。
+#   - 8GB 机型：模型可 ready，但常驻后只剩 ~900MB，会被出图预检（1200MB）拦下；
+#     不建议部署，也别改阈值绕过保护。低内存机型务必保持 GPU 后端。
+#
+# 铁律（别改）：
+#   - GPU 挂 /dev/dri；绝不设 mem_limit；不挂 docker.sock、不装 sshd
+#   - 镜像不含模型权重，模型目录必须按 README 的结构自行准备
+#
+services:
+  sd-one:
+    image: mingmate/sd15-one-gpu:2026-11-08
+    container_name: SD15-One-GPU
+    restart: unless-stopped
+    user: "0:0"
+    # 让容器里能解析 host.docker.internal 并指到宿主机（网页「底座更新」面板依赖；
+    # 不装更新代理时这行无害，可保留）。
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    devices:
+      - /dev/dri:/dev/dri                     # 核显（必需）
+    volumes:
+      - /volume1/ovms-models:/models:ro                  # 模型目录（只读）
+      - /volume1/sd15-one/state.json:/tmp/sd_one_state.json
+    ports:
+      - 7860:7860     # 网页界面（必需，唯一对外端口）
+    environment:
+      - OVMS_PORT=8000
+      - UI_PORT=7860
+      - CTL_PORT=7890
+      - READY_TIMEOUT=540
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
