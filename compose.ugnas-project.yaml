@@ -1,0 +1,40 @@
+# SD15 文生图 · 绿联 NAS「项目」专用 compose（相对路径，跨机型通用）
+# 用法：Docker → 项目 → 创建 → 把本文件内容粘进编辑器 → 立即部署
+#
+# ⚠️ 部署前必读：
+# 1. 绿联项目创建向导会生成一个项目目录（在 Docker 共享目录下）。把模型离线包解压到该目录下的 ovms-models/：
+#      ovms-models/config.json                              ← 0 字节空文件
+#      ovms-models/OpenVINO/stable-diffusion-v1-5-int8-ov/  ← 26 个模型文件
+# 2. 在同一项目目录建一个 0 字节的 state.json 文件（必须是文件，不能是目录）。
+# 3. 16GB 内存机型才能稳定出图；8GB 机型不建议部署。x86_64（amd64）。
+#
+# 相对路径 ./ 基于项目目录，不依赖 /volume1，换存储池也能用。
+# 镜像不含模型权重；卷、extra_hosts、核显、单端口、不设 mem_limit 已全部写死。
+# 不要用 Docker「镜像 → 运行」的一键方式，它不会自动挂模型卷。
+
+services:
+  sd-one:
+    image: mingmate/sd15-one-gpu:2026-11-09
+    container_name: SD15-One-GPU
+    restart: unless-stopped
+    user: "0:0"
+    # 让容器里能解析宿主机（「底座更新」面板依赖；不装更新代理时这行无害）
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    devices:
+      - /dev/dri:/dev/dri                     # 核显（必需）
+    volumes:
+      - ./ovms-models:/models:ro              # 模型目录（只读）
+      - ./state.json:/tmp/sd_one_state.json  # 必须是文件
+    ports:
+      - 7860:7860                             # 网页界面（唯一对外端口）
+    environment:
+      - OVMS_PORT=8000
+      - UI_PORT=7860
+      - CTL_PORT=7890
+      - READY_TIMEOUT=540
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
