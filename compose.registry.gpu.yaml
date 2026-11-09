@@ -1,6 +1,7 @@
 # SD15 文生图 · 纯 GPU 版 · 在线拉取版 compose（只暴露 7860 网页口）
 # 2026-11-08：镜像从 Docker Hub 直接拉取，无需先导入 tar。
-# 本 tag 为修复版：纯 GPU 版界面不再出现 NPU 选项，镜像只声明 7860 端口。
+# 本 tag 为修复版：纯 GPU 版界面不再出现 NPU 选项，镜像只声明 7860 端口；
+# 新增启动自检——没挂模型卷时 WebUI 直接给三步指引，不再抛 OVMS 退出码 1。
 # 若你用的是 GitHub Release 的离线 tar（镜像 tag 为 sd15-one-gpu:local），
 # 请改用 compose.dist.gpu.yaml，两者不要混用。
 #
@@ -18,7 +19,7 @@
 #
 services:
   sd-one:
-    image: mingmate/sd15-one-gpu:2026-11-08
+    image: mingmate/sd15-one-gpu:2026-11-09
     container_name: SD15-One-GPU
     restart: unless-stopped
     user: "0:0"
