@@ -15,18 +15,26 @@
 在线拉取（推荐）：
 
 ```bash
-docker pull mingmate/sd15-one-gpu:2026-11-08
+docker pull mingmate/sd15-one-gpu:2026-11-09
 ```
 
 Docker Hub 页面：https://hub.docker.com/r/mingmate/sd15-one-gpu
 
-国内网络不稳时，用本仓库 Releases 里的 `sd15-one-gpu_2026-11-08.tar` 离线导入：
+国内网络不稳时，用本仓库 Releases 里的 `sd15-one-gpu_2026-11-09.tar` 离线导入：
 
 ```bash
 docker load -i sd15-one-gpu_2026-11-08.tar
 ```
 
 导入后的镜像名是 `sd15-one-gpu:local`，把下面命令里的镜像名换成它即可。
+
+## 绿联 NAS 推荐：用「项目」导入（别用一键运行）
+
+绿联 Docker 的「镜像 → 运行」不会自动挂模型卷，容器起来也会报模型加载失败。请改用 **Docker → 项目 → 创建**，把 [`compose.ugnas-project.yaml`](compose.ugnas-project.yaml) 的内容粘进编辑器再部署。该文件已把模型卷、`extra_hosts`、核显、单端口、不设 `mem_limit` 全部预设好，卷用相对路径，换存储池也不用改。
+
+模型要放在向导生成的项目目录里：`ovms-models/config.json`（0 字节空文件）+ `ovms-models/OpenVINO/stable-diffusion-v1-5-int8-ov/`（26 个文件），并在同目录建 0 字节 `state.json`。完整五步见 [`绿联NAS-项目部署.md`](绿联NAS-项目部署.md)。
+
+> 2026-11-09 起镜像带启动自检：即使有人仍用一键运行，WebUI 也会直接指出缺什么、怎么补，不再显示「OVMS 退出码 1 + Python sys.path」。
 
 ## 部署
 
@@ -47,7 +55,7 @@ docker load -i sd15-one-gpu_2026-11-08.tar
      -v <模型基目录>:/models:ro \
      -v <state.json 文件>:/tmp/sd_one_state.json \
      --device /dev/dri:/dev/dri \
-     mingmate/sd15-one-gpu:2026-11-08
+     mingmate/sd15-one-gpu:2026-11-09
    ```
 
    四样别漏：宿主机名映射、模型卷只读挂载、`state.json` 必须是文件（不能是目录）、`/dev/dri` 透传；**不要设 mem_limit**。
