@@ -1,0 +1,133 @@
+# SD15 文生图 · 绿联 NAS「项目」在线部署版（自动拉模型）
+# 用法：Docker → 项目 → 创建 → 选存放路径 → 把本文件整段粘进 Compose 配置 → 立即部署
+#
+# 与 compose.ugnas-project.yaml 的区别：本版多一个 init-model 服务，首次部署时
+# 自动从 ModelScope（国内直连、免登录）把 2.2GB 模型下载到项目目录，
+# 不用手动找模型包、不用手动解压、不用手动建 state.json。
+#
+# 实测（2026-11-10，国内网络无代理）：
+#   - 清单 API / resolve 下载均免登录；Range 返回 206，可断点续传
+#   - 26 个模型文件与本地逐项一致；多出的 .gitattributes / README.md / configuration.json 自动跳过
+#   - 速度约 1.1~1.4 MB/s（并发不能提升），首次部署模型下载约 25~30 分钟，属正常，别关页面
+#   - 重跑只补缺失/不完整的文件，已下好的不会重下
+#
+# ⚠️ 16GB 内存机型才能稳定出图；8GB 机型不建议部署。x86_64（amd64）。
+# 卷用相对路径 ./，基准是绿联向导生成的项目目录，不依赖 /volume1。
+
+services:
+  init-model:
+    image: mingmate/sd15-one-gpu:2026-11-09
+    container_name: sd15-init-model
+    user: "0:0"
+    restart: "no"
+    volumes:
+      - ./:/work
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        /opt/venv/bin/python - <<'PY'
+        import os, json, time, sys, urllib.request
+
+        BASE = "https://www.modelscope.cn"
+        MODEL = "OpenVINO/stable-diffusion-v1-5-int8-ov"
+        WORK = "/work"
+        DST = os.path.join(WORK, "ovms-models", "OpenVINO", "stable-diffusion-v1-5-int8-ov")
+        SKIP = {".gitattributes", "README.md", "configuration.json"}
+        api = BASE + "/api/v1/models/" + MODEL + "/repo/files?Revision=master&Recursive=true"
+
+        print("[init] 读取模型清单…", flush=True)
+        for attempt in range(5):
+            try:
+                with urllib.request.urlopen(api, timeout=30) as r:
+                    data = json.load(r)
+                break
+            except Exception as e:
+                print("[init] 清单重试", attempt, e, flush=True)
+                time.sleep(3)
+        else:
+            sys.exit("无法获取模型清单")
+
+        files = [f for f in data["Data"]["Files"]
+                 if f.get("Type") == "blob" and f["Path"] not in SKIP]
+        print("[init] 需下载", len(files), "个文件，合计",
+              round(sum(f["Size"] for f in files) / 1e6, 1), "MB", flush=True)
+
+        def fetch(f):
+            path = os.path.join(DST, f["Path"])
+            size = f["Size"]
+            if os.path.exists(path) and os.path.getsize(path) == size:
+                return
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            url = BASE + "/models/" + MODEL + "/resolve/master/" + f["Path"]
+            for attempt in range(6):
+                have = os.path.getsize(path) if os.path.exists(path) else 0
+                if have == size:
+                    return
+                headers = {"Range": "bytes=%d-" % have} if have else {}
+                req = urllib.request.Request(url, headers=headers)
+                try:
+                    with urllib.request.urlopen(req, timeout=90) as r:
+                        # 坑：ModelScope 小文件带 Range 返回 200 + Content-Range（不是 206），
+                        # body 只有剩余片段。只看状态码会误判成全量，把片段覆盖成"完整文件"。
+                        cr = r.headers.get("Content-Range") or ""
+                        partial = bool(have and cr.lower().startswith("bytes"))
+                        mode = "ab" if partial else "wb"
+                        with open(path, mode) as out:
+                            while True:
+                                b = r.read(1024 * 1024)
+                                if not b:
+                                    break
+                                out.write(b)
+                except Exception as e:
+                    if "416" in str(e) and os.path.exists(path):
+                        os.remove(path)  # Range 越界，删掉重下全量
+                    print("[init] 重试", f["Path"], attempt, str(e)[:80], flush=True)
+                    time.sleep(3)
+            if not os.path.exists(path) or os.path.getsize(path) != size:
+                sys.exit("[init] 下载不完整: " + f["Path"])
+
+        for i, f in enumerate(files, 1):
+            fetch(f)
+            print("[init] %d/%d %s" % (i, len(files), f["Path"]), flush=True)
+
+        # OVMS 要求模型基目录下有 0 字节 config.json
+        cfg = os.path.join(WORK, "ovms-models", "config.json")
+        os.makedirs(os.path.dirname(cfg), exist_ok=True)
+        if not os.path.exists(cfg):
+            open(cfg, "wb").close()
+        # state.json 必须是文件，不能让 Docker 建成目录
+        st = os.path.join(WORK, "state.json")
+        if not os.path.exists(st):
+            open(st, "wb").close()
+        print("[init] 完成，模型与状态文件就绪", flush=True)
+        PY
+
+  sd-one:
+    image: mingmate/sd15-one-gpu:2026-11-09
+    container_name: SD15-One-GPU
+    restart: unless-stopped
+    user: "0:0"
+    depends_on:
+      init-model:
+        condition: service_completed_successfully
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    devices:
+      - /dev/dri:/dev/dri                     # 核显（必需）
+    volumes:
+      - ./ovms-models:/models:ro              # 模型目录（只读）
+      - ./state.json:/tmp/sd_one_state.json  # 必须是文件
+    ports:
+      - 7860:7860                             # 网页界面（唯一对外端口）
+    environment:
+      - OVMS_PORT=8000
+      - UI_PORT=7860
+      - CTL_PORT=7890
+      - READY_TIMEOUT=540
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
