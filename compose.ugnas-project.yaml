@@ -14,7 +14,7 @@
 
 services:
   sd-one:
-    image: mingmate/sd15-one-gpu:2026-11-09
+    image: mingmate/sd15-one-gpu:2026-11-18
     container_name: SD15-One-GPU
     restart: unless-stopped
     user: "0:0"
@@ -29,6 +29,8 @@ services:
     ports:
       - 7860:7860                             # 网页界面（唯一对外端口）
     environment:
+      # 0 = 隐藏「底座更新（OpenVINO）」面板（宿主机没装 8899 代理时建议隐藏）
+      - SD15_SHOW_UPDATER=0
       - OVMS_PORT=8000
       - UI_PORT=7860
       - CTL_PORT=7890
