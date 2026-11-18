@@ -1,7 +1,7 @@
 # SD15 文生图 · 绿联 NAS「项目」离线部署版
 # 适用：已经用 restore_model.sh 把模型离线包恢复到本目录之后。
 # 镜像默认用离线导入的本地 tag；若想改成在线拉取，把 image 换成
-# mingmate/sd15-one-gpu:2026-11-09 即可（其余不用动）。
+# mingmate/sd15-one-gpu:2026-11-18 即可（其余不用动）。
 #
 # ⚠️ 16GB 内存机型才能稳定出图；8GB 机型不建议部署。x86_64（amd64）。
 # 卷用相对路径 ./，基准是绿联向导生成的项目目录，不依赖 /volume1。
@@ -22,6 +22,8 @@ services:
     ports:
       - 7860:7860                             # 网页界面（唯一对外端口）
     environment:
+      # 0 = 隐藏「底座更新（OpenVINO）」面板（宿主机没装 8899 代理时建议隐藏）
+      - SD15_SHOW_UPDATER=0
       - OVMS_PORT=8000
       - UI_PORT=7860
       - CTL_PORT=7890
