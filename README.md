@@ -46,7 +46,7 @@ docker load -i sd15-one-gpu_2026-11-08.tar
 ## 只想点一下？用模型内置的一键版
 
 ```bash
-docker pull mingmate/sd15-one-gpu:2026-11-10-full
+docker pull mingmate/sd15-one-gpu:2026-11-23-full
 ```
 
 绿联 Docker「镜像 → 运行」直接创建容器即可：**不用挂模型卷、不用准备任何文件**。镜像内置 2.2GB 模型权重，GUI 会自动透传核显设备；实测不挂任何卷时 `/models` 已存在、启动自检通过、WebUI 正常。
