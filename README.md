@@ -46,7 +46,7 @@ docker load -i sd15-one-gpu_2026-11-08.tar
 ## 只想点一下？用模型内置的一键版
 
 ```bash
-docker pull mingmate/sd15-one-gpu:2026-11-23-full
+docker pull mingmate/sd15-one-gpu   # 或 :latest，默认就是内置模型的 full 版
 ```
 
 绿联 Docker「镜像 → 运行」直接创建容器即可：**不用挂模型卷、不用准备任何文件**。镜像内置 2.2GB 模型权重，GUI 会自动透传核显设备；实测不挂任何卷时 `/models` 已存在、启动自检通过、WebUI 正常。
@@ -72,7 +72,7 @@ environment:
   - SD15_SHOW_UPDATER=0   # 默认 1 显示；设 0 隐藏，功能代码仍在，改回 1 即恢复
 ```
 
-四份 compose 已默认设 `0`。新镜像 tag `2026-11-18` 已发布，`latest` 同步更新；旧 `2026-11-09` 保留回滚。
+四份 compose 已默认设 `0`。**`latest` 现在指向模型内置版 `2026-11-23-full`（约 3.8GB，不用挂模型卷）**；想要轻量版请显式指定 `mingmate/sd15-one-gpu:2026-11-18`（约 1.3G，需自行挂模型卷）。旧 `2026-11-09` 保留回滚。
 
 
 ## 部署
